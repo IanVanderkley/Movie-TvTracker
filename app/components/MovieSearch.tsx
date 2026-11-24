@@ -56,7 +56,7 @@ export default function MovieSearch() {
                             className="w-full h-auto rounded mb-2"
                             />
                         ):(
-                            <div className="w-full aspect-[2/3] bg-gray-200 flex items-center justify-center rounded mb-2 text-gray-500">
+                            <div className="w-full aspect-2/3 bg-gray-200 flex items-center justify-center rounded mb-2 text-gray-500">
                             No Image
                             </div>
                         )}
