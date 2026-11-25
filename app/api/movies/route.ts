@@ -1,27 +1,35 @@
-import { NextRequest,NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
-    const { searchParams } = new URL(request.url)
-    const query = searchParams.get('query');
+const TMDB_BASE = 'https://api.themoviedb.org/3';
 
-    if (!query) {
-        return NextResponse.json({ results: []});
+export async function GET(request:Request) {
+    const { searchParams } = new URL(request.url);
+    const title = searchParams.get("title")?.trim();
+
+    if (!title) {
+        return NextResponse.json({ results: [] });
     }
 
-    const res = await fetch(
-        `https://themoviedb.org{encodeURIComponent(query)}&include_adult=false&language=en-US&page=1`,
-        {
-            headers: {
-                accept: 'application/json',
-                Authorization: `Bearer ${process.env.TMDB_READ_ACCESS_TOKEN}`
-
-            },
-        }
-    );
-
-    if (!res.ok){
-        return NextResponse.json({ error: 'Failed to fetch from TMDB'}, {status:res.status});
+    const token = process.env.TMDB_READ_ACCESS_TOKEN;
+    if(!token) {
+        return NextResponse.json(
+            {error: "Missing TMDB API Key"},
+            {status: 500}
+        );
     }
+    const url = `${TMDB_BASE}/search/movie?query=${encodeURIComponent(title)}`;
+    const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}`},
+        next: {revalidate:3600},
+    });
+
+    if (!res.ok) {
+        return NextResponse.json(
+            {error: "Upstream request failed", status: res.status},
+            {status:502}
+        );
+    }
+
     const data = await res.json();
-    return NextResponse.json(data);
+    return NextResponse.json({ results: data.results ?? []})
 }
